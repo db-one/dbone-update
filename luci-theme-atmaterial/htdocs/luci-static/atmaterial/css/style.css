@@ -1223,10 +1223,6 @@ form.inline + form.inline,
     min-width: 15rem;
 }
 
-.cbi-value-field .cbi-input-select {
-    width: 15rem;
-}
-
 .ifacebadge {
     display: inline-flex;
     border-bottom: 1px solid #CCCCCC;
