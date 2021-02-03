@@ -37,9 +37,9 @@ TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 define Package/bcm27xx-userland
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=@(TARGET_bcm27xx||TARGET_brcm2708)
+  DEPENDS:=@TARGET_bcm27xx
   TITLE:=BCM27xx userland tools
-  DEFAULT:=y if TARGET_bcm27xx||TARGET_brcm2708
+  DEFAULT:=y if TARGET_bcm27xx
 endef
 
 define Package/bcm27xx-userland/description
