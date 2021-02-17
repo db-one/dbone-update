@@ -1,9 +1,11 @@
+#!/bin/sh
+
 RAM_ROOT=/tmp/root
 
 export BACKUP_FILE=sysupgrade.tgz	# file extracted by preinit
 
 [ -x /usr/bin/ldd ] || ldd() { LD_TRACE_LOADED_OBJECTS=1 $*; }
-libs() { ldd $* 2>/dev/null | sed -E 's/(.* => )?(.*) .*/\2/'; }
+libs() { ldd $* 2>/dev/null | sed -r 's/(.* => )?(.*) .*/\2/'; }
 
 install_file() { # <file> [ <file> ... ]
 	local target dest dir
@@ -61,20 +63,8 @@ ask_bool() {
 	[ "$answer" -gt 0 ]
 }
 
-_v() {
-	[ -n "$VERBOSE" ] && [ "$VERBOSE" -ge 1 ] && echo "$*" >&2
-}
-
-_vn() {
-	[ -n "$VERBOSE" ] && [ "$VERBOSE" -ge 1 ] && echo -n "$*" >&2
-}
-
 v() {
-	_v "$(date) upgrade: $@"
-}
-
-vn() {
-	_vn "$(date) upgrade: $@"
+	[ "$VERBOSE" -ge 1 ] && echo "$@"
 }
 
 json_string() {
@@ -101,18 +91,7 @@ get_image() { # <source> [ <command> ]
 		esac
 	fi
 
-	$cmd <"$from"
-}
-
-get_image_dd() {
-	local from="$1"; shift
-
-	(
-		exec 3>&2
-		( exec 3>&2; get_image "$from" 2>&1 1>&3 | grep -v -F ' Broken pipe'     ) 2>&1 1>&3 \
-			| ( exec 3>&2; dd "$@" 2>&1 1>&3 | grep -v -E ' records (in|out)') 2>&1 1>&3
-		exec 3>&-
-	)
+	cat "$from" 2>/dev/null | $cmd
 }
 
 get_magic_word() {
@@ -123,35 +102,16 @@ get_magic_long() {
 	(get_image "$@" | dd bs=4 count=1 | hexdump -v -n 4 -e '1/1 "%02x"') 2>/dev/null
 }
 
-get_magic_gpt() {
-	(get_image "$@" | dd bs=8 count=1 skip=64) 2>/dev/null
-}
-
-get_magic_vfat() {
-	(get_image "$@" | dd bs=3 count=1 skip=18) 2>/dev/null
-}
-
-get_magic_fat32() {
-	(get_image "$@" | dd bs=1 count=5 skip=82) 2>/dev/null
-}
-
-part_magic_efi() {
-	local magic=$(get_magic_gpt "$@")
-	[ "$magic" = "EFI PART" ]
-}
-
-part_magic_fat() {
-	local magic=$(get_magic_vfat "$@")
-	local magic_fat32=$(get_magic_fat32 "$@")
-	[ "$magic" = "FAT" ] || [ "$magic_fat32" = "FAT32" ]
-}
-
 export_bootdevice() {
 	local cmdline bootdisk rootpart uuid blockdev uevent line class
 	local MAJOR MINOR DEVNAME DEVTYPE
 
 	if read cmdline < /proc/cmdline; then
 		case "$cmdline" in
+			*block2mtd=*)
+				bootdisk="${cmdline##*block2mtd=}"
+				bootdisk="${bootdisk%%,*}"
+			;;
 			*root=*)
 				rootpart="${cmdline##*root=}"
 				rootpart="${rootpart%% *}"
@@ -258,7 +218,8 @@ get_partitions() { # <device> <filename>
 		rm -f "/tmp/partmap.$filename"
 
 		local part
-		part_magic_efi "$disk" && {
+		local magic=$(dd if="$disk" bs=8 count=1 skip=64 2>/dev/null)
+		if [ "$magic" = "EFI PART" ]; then
 			#export_partdevice will fail when partition number is greater than 15, as
 			#the partition major device number is not equal to the disk major device number
 			for part in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
@@ -273,7 +234,7 @@ get_partitions() { # <device> <filename>
 
 				printf "%2d %5d %7d\n" $part $lba $num >> "/tmp/partmap.$filename"
 			done
-		} || {
+		else
 			for part in 1 2 3 4; do
 				set -- $(hexdump -v -n 12 -s "$((0x1B2 + $part * 16))" -e '3/4 "0x%08X "' "$disk")
 
@@ -285,7 +246,7 @@ get_partitions() { # <device> <filename>
 
 				printf "%2d %5d %7d\n" $part $lba $num >> "/tmp/partmap.$filename"
 			done
-		}
+		fi
 	fi
 }
 
@@ -300,7 +261,6 @@ indicate_upgrade() {
 # $(2): (optional) pipe command to extract firmware, e.g. dd bs=n skip=m
 default_do_upgrade() {
 	sync
-	echo 3 > /proc/sys/vm/drop_caches
 	if [ -n "$UPGRADE_BACKUP" ]; then
 		get_image "$1" "$2" | mtd $MTD_ARGS $MTD_CONFIG_ARGS -j "$UPGRADE_BACKUP" write - "${PART_NAME:-image}"
 	else
