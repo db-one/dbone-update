@@ -46,6 +46,7 @@
 ###### luci-app-smartinfo #磁盘监控 ，该工具帮助您通过S.M.A.R.T技术来监控您硬盘的健康状况
 ###### luci-app-jd-dailybonus    #京东签到
 ###### node-request    #京东签到所需组件
+###### lluci-app-ddnsto    #小宝开发的DDNS.to内网穿透
 ###### lluci-app-autotimeset   #定时设置，替代luci-app-autoreboot
 
 
