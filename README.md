@@ -39,6 +39,7 @@
 ###### luci-app-turboacc   #Turbo ACC 网络加速设置
 ###### luci-app-sfe   #高通开源的 Shortcut FE 转发加速引擎
 ###### luci-app-flowoffload   #开源 Linux Flow Offload 驱动
+###### luci-app-ddnsto    #小宝开发的DDNS.to内网穿透
 ###### luci-app-godproxy   #GodProxy是基于koolproxyR Plus+重新整理而来
 ###### luci-app-dnsfilter   #基于DNS的广告过滤，支持 AdGuardHome/Host/DNSMASQ/Domain 格式的规则订阅
 ###### luci-app-serverchan    #微信推送
@@ -48,7 +49,6 @@
 ###### luci-app-smartinfo #磁盘监控 ，该工具帮助您通过S.M.A.R.T技术来监控您硬盘的健康状况
 ###### luci-app-autotimeset   #定时设置，替代luci-app-autoreboot
 ###### luci-app-jd-dailybonus    #京东签到
-###### luci-app-ddnsto    #小宝开发的DDNS.to内网穿透
 
 
 #
