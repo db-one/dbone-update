@@ -13,20 +13,19 @@ import logging
 import json
 import time
 from urllib import request
-
 from datetime import date, timedelta
-
-from passlib.hash import pbkdf2_sha256
+from http import HTTPStatus
+from concurrent.futures import ThreadPoolExecutor
+from hashlib import sha1
 
 import redis
 import pymongo
-from http import HTTPStatus
-from concurrent.futures import ThreadPoolExecutor
-from tornado import web, ioloop, httpserver, gen, options
-from tornado.log import enable_pretty_logging
-from tornado import escape
-from tornado.concurrent import run_on_executor
+
 from apscheduler.schedulers.background import BackgroundScheduler
+from tornado import web, ioloop, httpserver, gen, options, escape
+from tornado.log import enable_pretty_logging
+from tornado.concurrent import run_on_executor
+from passlib.hash import pbkdf2_sha256
 
 from crypto import decrypt
 
@@ -302,6 +301,18 @@ class TopHandler(BaseHandler):
             return list(data)
         return []
 
+    def get_most(self):
+        projection = {"_id": False, "like": True}
+        data = self.mongo.db['users'].find({}, projection)
+        most_like = {}
+        for item in data:
+            for _id in item.get("like", []):
+                most_like[_id] = most_like.get(_id, 0) + 1
+        most = sorted(most_like, key=most_like.get)
+        most.reverse()
+        most_like_data = self.mongo.db["yyets"].find({"data.info.id": {"$in": most}}, self.projection).limit(15)
+        return list(most_like_data)
+
     @run_on_executor()
     def get_top_resource(self):
 
@@ -314,7 +325,9 @@ class TopHandler(BaseHandler):
 
         area_dict["ALL"] = "全部"
         area_dict["LIKE"] = "收藏"
+        # area_dict["MOST"] = "最爱"
         all_data["LIKE"] = self.get_user_like()
+        # all_data["MOST"] = self.get_most()
 
         all_data["class"] = area_dict
         return all_data
@@ -486,6 +499,42 @@ class NotFoundHandler(BaseHandler):
         self.render("404.html")
 
 
+class HelpHandler(BaseHandler):
+    def file_info(self, file_path) -> dict:
+        result = {}
+        if iter(file_path):
+            for fp in file_path:
+                try:
+                    checksum = self.checksum(fp)
+                    date = self.ts_date(os.stat(fp).st_ctime)
+                    result[fp] = [checksum, date]
+                except Exception as e:
+                    result[fp] = str(e), ""
+        return result
+
+    @staticmethod
+    def ts_date(ts):
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+
+    @staticmethod
+    def checksum(file_path) -> str:
+        sha = sha1()
+        try:
+            with open(file_path, "rb") as f:
+                sha.update(f.read())
+                checksum = sha.hexdigest()
+        except Exception as e:
+            checksum = str(e)
+
+        return checksum
+
+    def get(self):
+        live = "data/yyets_mongo.gz"
+        mysql = "data/yyets_mysql.zip"
+        sqlite = "data/yyets_sqlite.zip"
+        self.render("help.html", data=self.file_info((live, mysql, sqlite)))
+
+
 class RunServer:
     root_path = os.path.dirname(__file__)
     static_path = os.path.join(root_path, '')
@@ -499,6 +548,7 @@ class RunServer:
         (r'/api/grafana/search', GrafanaSearchHandler),
         (r'/api/grafana/query', GrafanaQueryHandler),
         (r'/api/blacklist', BlacklistHandler),
+        (r'/help.html', HelpHandler),
         (r'/', IndexHandler),
         (r'/(.*\.html|.*\.js|.*\.css|.*\.png|.*\.jpg|.*\.ico|.*\.gif|.*\.woff2|.*\.gz|.*\.zip)', web.StaticFileHandler,
          {'path': static_path}),
