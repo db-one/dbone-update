@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.2.34
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -50,7 +50,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/php7/Default
-  SUBMENU:=PHP
+  SUBMENU:=PHP7
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=PHP7 Hypertext preprocessor
@@ -565,7 +565,12 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force )
+	$(if $(QUILT),,( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
+endef
+
+define Build/Configure
+	$(if $(QUILT),( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
+	$(call Build/Configure/Default)
 endef
 
 define Build/InstallDev
