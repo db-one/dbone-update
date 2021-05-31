@@ -1,6 +1,6 @@
 # 项目手册
 
-# 部署运行
+# bot 部署运行
 
 ## docker-compose
 
@@ -55,8 +55,6 @@ pip install -r requirements.txt
 python3 web/prepare/convert_db.py
 ```
 
-**不再兼容旧版本数据**
-
 ### 4. 运行
 
 ```bash
@@ -67,24 +65,15 @@ python /path/to/YYeTsBot/yyetsbot/bot.py
 
 参考 `yyets.service`
 
-### 6. 网站部署运行方式
+# 网站部署运行方式
 
 参考 `worker`和`web`目录下的 `README`。需要注意，cf worker已经停止开发。
 
-
-## 添加新的资源网站
+# 添加新的资源网站
 
 欢迎各位开发提交新的资源网站！方法非常简单，重写 `BaseFansub`，实现`search_preview`和`search_result`，按照约定的格式返回数据。
 
 然后把类名字添加到 `FANSUB_ORDER` 就可以了！是不是很简单！
-
-## bot无响应
-
-有时不知为何遇到了bot卡死，无任何反馈。😂~~这个时候需要client api了~~😂
-
-原因找到了，是因为有时爬虫会花费比较长的时间，然后pytelegrambotapi默认只有两个线程，那么后续的操作就会被阻塞住。
-
-临时的解决办法是增加线程数量，长期的解决办法是使用celery分发任务。
 
 # 网站开发手册
 
@@ -139,6 +128,7 @@ python /path/to/YYeTsBot/yyetsbot/bot.py
 GET `/api/comments`
 
 分页，支持URL参数：
+* resource_id: 资源id
 * size: 每页评论数量，默认5（或者其他数值）
 * page: 当前页
 
@@ -159,14 +149,15 @@ GET `/api/comments`
             "id": 1
         }
     ],
-    "count": 2
+    "count": 2,
+    "resource_id": 39301
 }
 
 ```
 
 ## 2. 获取验证码
-GET `/api/captha?id=1234abc`，id是随机生成的字符串
-API 返回字符串，形如 `data:image/jpeg;base64,iVBORw0KGgoAAA....`
+GET `/api/captcha?id=1234abc`，id是随机生成的字符串
+API 返回字符串，形如 `data:image/png;base64,iVBORw0KGgoAAA....`
 
 ## 3. 提交评论
 POST `/api/comments`
