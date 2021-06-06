@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.17.7
-PKG_RELEASE:=2
+PKG_VERSION:=1.21.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=b62756842807e5693b794e5d0ae289bd8ae5b098e66538b2a91eb80f25c591ff
+PKG_HASH:=fe192a4bac2bd3a769e8695cb9fe14a00e57eaceb919095347a83b5b2afc0771
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -468,6 +468,7 @@ ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define  Prepare/nginx-rtmp
 	$(eval $(Download/nginx-rtmp))
 	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(call PatchDir,$(PKG_BUILD_DIR)/nginx-rtmp,./patches-rtmp-nginx)
   endef
 endif
 
