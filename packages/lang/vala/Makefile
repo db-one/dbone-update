@@ -8,86 +8,45 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vala
-PKG_VERSION:=0.34.18
-PKG_RELEASE:=1
-PKG_LICENSE:=LGPL-2.1
+PKG_VERSION:=0.52.3
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/vala/0.34
-PKG_HASH:=b89044c6eb70556ca2486812a42983944b4f6ef18db66b5af1a9006de11b1cd2
+PKG_SOURCE_URL:=@GNOME/vala/0.52
+PKG_HASH:=037ea1a92bf0f1ab04a71b52a01d50aca1945ad1017b6189d9614f84f5c9b2d9
 
-PKG_BUILD_DEPENDS:=glib2 glib2/host vala/host
+PKG_MAINTAINER:=
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING
+
+PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:=glib2/host
+HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/host-build.mk
-
-TARGET_LDFLAGS+=\
-        -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 
 define Package/vala
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=C-sharp like language for the GObject system
   URL:=https://wiki.gnome.org/Projects/Vala
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-  DEPENDS:=+glib2 +libpthread
+  BUILDONLY:=1
 endef
 
 define Package/vala/description
-Vala is a C-sharp like language for the GObject system. This package contains
-the Vala-to-C compiler.
+  Vala is a C-sharp like language for the GObject system. This package contains
+  the Vala-to-C compiler for host.
 endef
 
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		all install
-endef
+HOST_CONFIGURE_ARGS += \
+	--disable-coverage \
+	--disable-debug \
+	--disable-valadoc \
+	--without-cgraph
 
-define Build/InstallDev
-	$(INSTALL_DIR) \
-		$(1)/usr/share/vala-0.34/vapi \
-		$(1)/usr/lib \
-		$(1)/usr/lib/pkgconfig
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/vala-0.34/vapi/* \
-		$(1)/usr/share/vala-0.34/vapi
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.34.{so*,la} \
-		$(1)/usr/lib
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
-		$(1)/usr/lib/pkgconfig
-endef
-
-define Package/vala/install
-	$(INSTALL_DIR) \
-		$(1)/usr/share/vala-0.34/vapi \
-		$(1)/usr/lib \
-		$(1)/usr/lib/pkgconfig \
-		$(1)/usr/bin
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/vala-0.34/vapi/* \
-		$(1)/usr/share/vala-0.34/vapi
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/libvala-0.34.{so*,la} \
-		$(1)/usr/lib
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/{vala,vala-0.34,valac,valac-0.34,vapicheck,vapicheck-0.34,vapigen,vapigen-0.34,vala-gen-introspect,vala-gen-introspect-0.34} \
-		$(1)/usr/bin
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
-		$(1)/usr/lib/pkgconfig
-endef
+HOST_LDFLAGS += \
+	-Wl,--rpath,$(STAGING_DIR_HOSTPKG)/lib
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,vala))
