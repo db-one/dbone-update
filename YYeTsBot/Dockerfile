@@ -19,7 +19,7 @@ COPY YYeTsFE/package.json /YYeTsBot/YYeTsFE/
 COPY YYeTsFE/yarn.lock /YYeTsBot/YYeTsFE/
 RUN yarn
 COPY . /YYeTsBot/
-RUN echo "gitdir: $(pwd)/../.git/modules/YYeTsFE" > .git
+RUN echo "gitdir: ../.git/modules/YYeTsFE" > .git
 RUN yarn run release
 
 
