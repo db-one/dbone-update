@@ -28,6 +28,10 @@ ifeq ($(strip $(UNPACK_CMD)),)
       EXT:=$(call ext,$(PKG_SOURCE:.$(EXT)=))
       DECOMPRESS_CMD:=xzcat $(DL_DIR)/$(PKG_SOURCE) |
     endif
+    ifeq (zst,$(EXT))
+      EXT:=$(call ext,$(PKG_SOURCE:.$(EXT)=))
+      DECOMPRESS_CMD:=zstdcat $(DL_DIR)/$(PKG_SOURCE) |
+    endif
     ifeq ($(filter tgz tbz tbz2 txz,$(EXT1)),$(EXT1))
       EXT:=tar
     endif
@@ -36,7 +40,7 @@ ifeq ($(strip $(UNPACK_CMD)),)
       UNPACK_CMD=$(DECOMPRESS_CMD) $(TAR_CMD)
     endif
     ifeq ($(EXT),cpio)
-      UNPACK_CMD=$(DECOMPRESS_CMD) (cd $(1)/..; cpio -i -d)
+      UNPACK_CMD=$(DECOMPRESS_CMD) (cd $(1)/..; $(STAGING_DIR_HOST)/bin/cpio -i -d)
     endif
     ifeq ($(EXT),zip)
       UNPACK_CMD=$(UNZIP_CMD)

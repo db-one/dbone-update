@@ -7,7 +7,7 @@
 sudo apt-get -y install build-essential asciidoc binutils bzip2 curl gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf
 `
 
-3. `git clone -b 19.07 --single-branch https://github.com/Lienol/openwrt openwrt19` 命令下载好源代码，然后 `cd openwrt19` 进入目录
+3. `git clone -b main --single-branch https://github.com/Lienol/openwrt openwrt` 命令下载好源代码，然后 `cd openwrt` 进入目录
 
 4. ```bash
    ./scripts/feeds clean
@@ -21,13 +21,13 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 curl gawk gettex
 
 6. 输入 `make -j1 V=s` （-j1 后面是线程数。第一次编译推荐用单线程）即可开始编译你要的固件了。
 
-6. 编译完成后输出路径：openwrt19/bin/targets
+6. 编译完成后输出路径：openwrt/bin/targets
 
 你可以自由使用，但源码编译二次发布请注明我的 GitHub 仓库链接。谢谢合作！
  
  -----------------------------------------------------
 
-![OpenWrt logo](/logo.svg)
+![OpenWrt logo](include/logo.png)
 
 OpenWrt Project is a Linux operating system targeting embedded devices. Instead
 of trying to create a single, static firmware, OpenWrt provides a fully
@@ -54,8 +54,8 @@ the [Build System Setup](https://openwrt.org/docs/guide-developer/build-system/i
 documentation.
 
 ```
-gcc binutils bzip2 flex python3 perl make find grep diff unzip gawk getopt
-subversion libz-dev libc-dev
+binutils bzip2 diff find flex gawk gcc-6+ getopt grep install libc-dev libz-dev
+make4.1+ perl python3.6+ rsync subversion unzip which
 ```
 
 ### Quickstart
@@ -86,8 +86,8 @@ packages to OpenWrt, please find the fitting repository below.
 * [OpenWrt Packages](https://github.com/openwrt/packages): Community repository
   of ported packages.
 
-* [OpenWrt Routing](https://github.com/openwrt-routing/packages): Packages
-  specifically focused on (mesh) routing.
+* [OpenWrt Routing](https://github.com/openwrt/routing): Packages specifically
+  focused on (mesh) routing.
 
 ## Support Information
 
@@ -103,13 +103,13 @@ For a list of supported devices see the [OpenWrt Hardware Database](https://open
 ### Support Community
 
 * [Forum](https://forum.openwrt.org): For usage, projects, discussions and hardware advise.
-* [Support Chat](https://webchat.freenode.net/#openwrt): Channel `#openwrt` on freenode.net.
+* [Support Chat](https://webchat.oftc.net/#openwrt): Channel `#openwrt` on **oftc.net**.
 
 ### Developer Community
 
 * [Bug Reports](https://bugs.openwrt.org): Report bugs in OpenWrt
 * [Dev Mailing List](https://lists.openwrt.org/mailman/listinfo/openwrt-devel): Send patches
-* [Dev Chat](https://webchat.freenode.net/#openwrt-devel): Channel `#openwrt-devel` on freenode.net.
+* [Dev Chat](https://webchat.oftc.net/#openwrt-devel): Channel `#openwrt-devel` on **oftc.net**.
 
 ## License
 
