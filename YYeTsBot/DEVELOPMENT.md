@@ -1,7 +1,25 @@
 # 项目手册
 
-# bot 部署运行
+# 网站部署方式
+## 一键脚本
+**仅支持AMD64，请先安装 docker、docker-compose和curl**
+### Linux/macOS： 
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/tgbot-collection/YYeTsBot/master/scripts/install.sh)"
+````
+### Windows
+请再安装一个 [git for windows](https://gitforwindows.org/)，然后桌面空白处右键，选择 `git bash here`
+再然后
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/tgbot-collection/YYeTsBot/master/scripts/install.sh)"
+````
 
+## docker-compose
+参考 `yyetsweb`目录下的 `README`
+
+
+# bot 
+可以选择docker，也可以直接运行在机器上。
 ## docker-compose
 
 * 参见 [这里](https://github.com/tgbot-collection/BotsRunner)
@@ -64,9 +82,7 @@ python /path/to/YYeTsBot/yyetsbot/bot.py
 
 参考 `yyets.service`
 
-# 网站部署运行方式
 
-参考 `yyetsweb`目录下的 `README`
 
 # 添加新的资源网站
 
