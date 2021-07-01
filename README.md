@@ -36,7 +36,7 @@
 ###### luci-app-control-weburl   #网址过滤
 ###### luci-app-control-webrestriction   #访问限制
 ###### luci-app-socat   #端口转发
-###### luci-app-turboacc   ##Linux Flow Offload Forwarding 转发加速引擎
+###### luci-app-turboacc   #Turbo ACC 网络加速
 ###### luci-app-ddnsto    #小宝开发的DDNS.to内网穿透
 ###### luci-app-godproxy   #GodProxy是基于koolproxyR Plus+重新整理而来
 ###### luci-app-dnsfilter   #基于DNS的广告过滤，支持 AdGuardHome/Host/DNSMASQ/Domain 格式的规则订阅
