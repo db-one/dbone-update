@@ -36,10 +36,9 @@
 ###### luci-app-control-weburl   #网址过滤
 ###### luci-app-control-webrestriction   #访问限制
 ###### luci-app-socat   #端口转发
-###### luci-app-turboacc   #Turbo ACC 网络加速
+###### luci-app-dnsfilter   #基于DNS的广告过滤，支持 AdGuardHome/Host/DNSMASQ/Domain 格式的规则订阅
 ###### luci-app-ddnsto    #小宝开发的DDNS.to内网穿透
 ###### luci-app-godproxy   #GodProxy是基于koolproxyR Plus+重新整理而来
-###### luci-app-dnsfilter   #基于DNS的广告过滤，支持 AdGuardHome/Host/DNSMASQ/Domain 格式的规则订阅
 ###### luci-app-serverchan    #微信推送
 ###### luci-app-smartdns   #smartdns DNS加速
 ###### luci-app-poweroff    #关机（增加关机功能）
@@ -47,6 +46,7 @@
 ###### luci-app-smartinfo #磁盘监控 ，该工具帮助您通过S.M.A.R.T技术来监控您硬盘的健康状况
 ###### luci-app-autotimeset   #定时设置，替代luci-app-autoreboot
 ###### luci-app-jd-dailybonus    #京东签到
+###### luci-app-turboacc   #Turbo ACC 网络加速
 
 
 #
