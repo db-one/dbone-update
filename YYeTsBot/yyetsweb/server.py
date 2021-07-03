@@ -17,10 +17,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from tornado.log import enable_pretty_logging
 from tornado import web, httpserver, ioloop, options
 
-from Mongo import OtherResource
+from Mongo import OtherMongoResource
 from handler import IndexHandler, UserHandler, ResourceHandler, TopHandler, UserLikeHandler, NameHandler, \
     CommentHandler, AnnouncementHandler, CaptchaHandler, MetricsHandler, GrafanaIndexHandler, GrafanaSearchHandler, \
-    GrafanaQueryHandler, BlacklistHandler, NotFoundHandler, DBDumpHandler
+    GrafanaQueryHandler, BlacklistHandler, NotFoundHandler, DBDumpHandler,CommentChildHandler
 
 enable_pretty_logging()
 
@@ -38,6 +38,7 @@ class RunServer:
         (r'/api/user', UserHandler),
         (r'/api/name', NameHandler),
         (r'/api/comment', CommentHandler),
+        (r'/api/comment/child', CommentChildHandler),
         (r'/api/captcha', CaptchaHandler),
         (r'/api/metrics', MetricsHandler),
         (r'/api/grafana/', GrafanaIndexHandler),
@@ -78,7 +79,7 @@ class RunServer:
 if __name__ == "__main__":
     timez = pytz.timezone('Asia/Shanghai')
     scheduler = BackgroundScheduler(timezone=timez)
-    scheduler.add_job(OtherResource().reset_top, 'cron', hour=0, minute=0, day=1)
+    scheduler.add_job(OtherMongoResource().reset_top, 'cron', hour=0, minute=0, day=1)
     scheduler.start()
     options.define("p", default=8888, help="running port", type=int)
     options.define("h", default='127.0.0.1', help="listen address", type=str)
