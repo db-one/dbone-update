@@ -130,10 +130,13 @@ class CommentMongoResource(CommentResource, Mongo):
                 .sort("_id", pymongo.DESCENDING).limit(self.inner_size).skip((self.inner_page - 1) * self.inner_size)
             children_data = list(children_data)
             self.get_user_group(children_data)
+
+            item["children"] = []
             if children_data:
-                item["children"] = []
                 item["children"].extend(children_data)
                 item["childrenCount"] = children_count
+            else:
+                item["childrenCount"] = 0
 
     def get_user_group(self, data):
         for comment in data:
