@@ -18,9 +18,7 @@ start_service() {
 	procd_close_instance
 }
 
-EXTRA_COMMANDS="check"
-EXTRA_HELP="	check Check haproxy config"
-
+extra_command "check" "Check haproxy config"
 check() {
 	$HAPROXY_BIN -c -q -V -f $HAPROXY_CONFIG
 }
