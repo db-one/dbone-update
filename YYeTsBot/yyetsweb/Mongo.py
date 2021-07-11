@@ -7,6 +7,7 @@
 
 __author__ = "Benny <benny.think@gmail.com>"
 
+import contextlib
 import sys
 import pathlib
 import pymongo
@@ -25,7 +26,8 @@ from passlib.handlers.pbkdf2 import pbkdf2_sha256
 
 from database import (AnnouncementResource, BlacklistResource, CommentResource, ResourceResource,
                       GrafanaQueryResource, MetricsResource, NameResource, OtherResource, DoubanResource,
-                      TopResource, UserLikeResource, UserResource, CaptchaResource, Redis, CommentChildResource)
+                      TopResource, UserLikeResource, UserResource, CaptchaResource, Redis,
+                      CommentChildResource, CommentNewestResource)
 from utils import ts_date
 
 lib_path = pathlib.Path(__file__).parent.parent.joinpath("yyetsbot").resolve().as_posix()
@@ -158,8 +160,6 @@ class CommentMongoResource(CommentResource, Mongo):
         self.inner_page = kwargs.get("inner_page", 1)
         self.inner_size = kwargs.get("inner_size", 5)
         condition = {"resource_id": resource_id, "deleted_at": {"$exists": False}, "type": {"$ne": "child"}}
-        if resource_id == -1:
-            condition.pop("resource_id")
 
         count = self.db["comment"].count_documents(condition)
         data = self.db["comment"].find(condition, self.projection) \
@@ -264,6 +264,33 @@ class CommentChildMongoResource(CommentChildResource, CommentMongoResource, Mong
         data = list(data)
         self.convert_objectid(data)
         self.get_user_group(data)
+        return {
+            "data": data,
+            "count": count,
+        }
+
+
+class CommentNewestMongoResource(CommentNewestResource, CommentMongoResource, Mongo):
+    def __init__(self):
+        super().__init__()
+        self.page = 1
+        self.size = 5
+        self.projection = {"ip": False, "parent_id": False, "children": False}
+        self.condition = {"deleted_at": {"$exists": False}}
+
+    def get_comment(self, page: int, size: int) -> dict:
+        # ID，时间，用户名，用户组，资源名，资源id
+        condition = {"deleted_at": {"$exists": False}}
+        count = self.db["comment"].count_documents(condition)
+        data = self.db["comment"].find(condition, self.projection) \
+            .sort("_id", pymongo.DESCENDING).limit(size).skip((page - 1) * size)
+        data = list(data)
+        self.convert_objectid(data)
+        self.get_user_group(data)
+        for i in data:
+            resource_id = i.get("resource_id", 233)
+            res = self.db["yyets"].find_one({"data.info.id": resource_id})
+            i["cnname"] = res["data"]["info"]["cnname"]
         return {
             "data": data,
             "count": count,
@@ -494,7 +521,7 @@ class DoubanMongoResource(DoubanResource, Mongo):
 
     def get_douban_image(self, rid: int) -> bytes:
         db_data = self.get_douban_data(rid)
-        return db_data["poster_data"]
+        return db_data["posterData"]
 
     def find_douban(self, resource_id: int):
         session = requests.Session()
@@ -503,7 +530,7 @@ class DoubanMongoResource(DoubanResource, Mongo):
 
         douban_col = self.db["douban"]
         yyets_col = self.db["yyets"]
-        data = douban_col.find_one({"resource_id": resource_id}, {"_id": False})
+        data = douban_col.find_one({"resourceId": resource_id}, {"_id": False, "raw": False})
         if data:
             logging.info("Existing data for %s", resource_id)
             return data
@@ -514,44 +541,67 @@ class DoubanMongoResource(DoubanResource, Mongo):
             return {}
         cname = names["data"]["info"]["cnname"]
         logging.info("cnname for douban is %s", cname)
-        # enname = names["data"]["info"]["enname"]
-        # aliasname = names["data"]["info"]["aliasname"].split("/")
 
         search_html = session.get(DOUBAN_SEARCH.format(cname)).text
-        logging.info("Analysis search html...%s", search_html)
+        logging.info("Analysis search html...length %s", len(search_html))
         soup = BeautifulSoup(search_html, 'html.parser')
         douban_item = soup.find_all("div", class_="content")
 
         fwd_link = unquote(douban_item[0].a["href"])
         douban_id = re.findall(r"https://movie.douban.com/subject/(\d*)/&query=", fwd_link)[0]
-        detail_link = DOUBAN_DETAIL.format(douban_id)
+        final_data = self.get_craw_data(cname, douban_id, resource_id, search_html, session)
+        douban_col.insert_one(final_data.copy())
+        final_data.pop("raw")
+        return final_data
 
+    @staticmethod
+    def get_craw_data(cname, douban_id, resource_id, search_html, session):
+        detail_link = DOUBAN_DETAIL.format(douban_id)
         detail_html = session.get(detail_link).text
         logging.info("Analysis detail html...%s", detail_link)
         soup = BeautifulSoup(detail_html, 'html.parser')
 
-        poster = soup.find_all("div", id="mainpic")
-        poster_image_link = poster[0].a.img["src"]
+        directors = [i.text for i in (soup.find_all("a", rel="v:directedBy"))]
+        writers = episode_count = episode_duration = ""
+        with contextlib.suppress(IndexError):
+            episode_duration = soup.find_all("span", property="v:runtime")[0].text
+        for i in soup.find_all("span", class_="pl"):
+            if i.text == "编剧":
+                writers = re.sub(r"\s", "", list(i.next_siblings)[1].text).split("/")
+            if i.text == "集数:":
+                episode_count = str(i.nextSibling)
+            if i.text == "单集片长:" and not episode_duration:
+                episode_duration = str(i.nextSibling)
+        actors = [i.text for i in soup.find_all("a", rel="v:starring")]
+        genre = [i.text for i in soup.find_all("span", property="v:genre")]
+        release_date = soup.find_all("span", property="v:initialReleaseDate")[0].text
+        poster_image_link = soup.find_all("div", id="mainpic")[0].a.img["src"]
+        rating = soup.find_all("strong", class_="ll rating_num")[0].text
+        year_text = re.sub(r"[()]", "", soup.find_all("span", class_="year")[0].text)
+        intro = re.sub(r"\s", "", soup.find_all("span", property="v:summary")[0].text)
 
-        rating_obj = soup.find_all("strong", class_="ll rating_num")
-        rating = rating_obj[0].text
-
-        actors_obj = soup.find_all("span", class_="attrs")
-        actors = actors_obj[-1].text
-        year = soup.find_all("span", class_="year")[0].text
-        year_text = re.sub(r"[()]", "", year)
-        intro = soup.find_all("span", property="v:summary")[0].text
-        intro = re.sub(r"\s", "", intro)
         final_data = {
-            "douban_id": douban_id,
-            "douban_link": detail_link,
-            "poster_link": poster_image_link,
-            "poster_data": session.get(poster_image_link).content,
-            "resource_id": resource_id,
+            "name": cname,
+            "raw": {
+                "search_url": DOUBAN_SEARCH.format(cname),
+                "detail_url": detail_link,
+                "search_html": search_html,
+                "detail_html": detail_html
+            },
+            "doubanId": int(douban_id),
+            "doubanLink": detail_link,
+            "posterLink": poster_image_link,
+            "posterData": session.get(poster_image_link).content,
+            "resourceId": resource_id,
             "rating": rating,
             "actors": actors,
+            "directors": directors,
+            "genre": genre,
+            "releaseDate": release_date,
+            "episodeCount": episode_count,
+            "episodeDuration": episode_duration,
+            "writers": writers,
             "year": year_text,
             "introduction": intro
         }
-        douban_col.insert_one(final_data.copy())
         return final_data
